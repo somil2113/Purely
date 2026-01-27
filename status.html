@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnostic Status</title>
+    <style>
+        body { font-family: monospace; padding: 20px; line-height: 1.8; white-space: pre-wrap; }
+        .status-json { background: #f5f5f5; padding: 20px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h2>Diagnostic Report</h2>
+    <div class="status-json" id="status">Loading...</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module">
+        const status = {
+            timestamp: new Date().toISOString(),
+            supabaseLibraryLoaded: typeof window.supabase !== 'undefined',
+            productsLoaded: false,
+            productCount: 0,
+            error: null,
+            products: []
+        };
+
+        try {
+            // Import and test
+            import('./js/supabase-helpers.js')
+                .then(helpers => helpers.fetchProducts())
+                .then(products => {
+                    status.productsLoaded = true;
+                    status.productCount = products.length;
+                    status.products = products.slice(0, 3).map(p => ({
+                        id: p.id,
+                        name: p.name,
+                        price: p.price,
+                        image: p.image
+                    }));
+                })
+                .catch(err => {
+                    status.error = err.message;
+                })
+                .finally(() => {
+                    document.getElementById('status').textContent = JSON.stringify(status, null, 2);
+                });
+        } catch (err) {
+            status.error = err.message;
+            document.getElementById('status').textContent = JSON.stringify(status, null, 2);
+        }
+
+        // Update status every 500ms
+        setInterval(() => {
+            document.getElementById('status').textContent = JSON.stringify(status, null, 2);
+        }, 500);
+    </script>
+</body>
+</html>

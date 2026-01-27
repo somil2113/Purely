@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login | Purely</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="js/supabase-config.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-login-container {
+            background: white;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .admin-login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .admin-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .admin-login-header h1 {
+            color: #333;
+            margin: 10px 0;
+            font-size: 1.8rem;
+        }
+
+        .admin-login-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .demo-credentials {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        .demo-credentials strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #667eea;
+        }
+
+        .demo-credentials p {
+            margin: 5px 0;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-login-container">
+        <div class="admin-login-header">
+            <div class="admin-icon">⚙️</div>
+            <h1>Admin Portal</h1>
+            <p>Manage Your Store</p>
+        </div>
+
+        <form onsubmit="handleAdminLogin(event)">
+            <div class="form-group">
+                <label for="admin-email">Email</label>
+                <input type="email" id="admin-email" required placeholder="admin@purely.com">
+                <div class="error-message" id="email-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="admin-password">Password</label>
+                <input type="password" id="admin-password" required placeholder="Enter password">
+                <div class="error-message" id="password-error"></div>
+            </div>
+
+            <button type="submit" class="login-btn">Login to Admin Dashboard</button>
+        </form>
+
+        <div class="demo-credentials">
+            <strong>Demo Admin Credentials:</strong>
+            <p>Email: <code>admin@purely.com</code></p>
+            <p>Password: <code>admin123</code></p>
+        </div>
+
+        <div class="back-link">
+            <a onclick="window.location.href='index.html'">← Back to Store</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize admin account if not exists
+        function initializeAdmin() {
+            const admins = JSON.parse(localStorage.getItem('purely_admins') || '[]');
+            if (admins.length === 0) {
+                const defaultAdmin = {
+                    id: 1,
+                    email: 'admin@purely.com',
+                    password: 'admin123',
+                    name: 'Administrator',
+                    role: 'admin',
+                    createdAt: new Date().toISOString()
+                };
+                localStorage.setItem('purely_admins', JSON.stringify([defaultAdmin]));
+            }
+        }
+
+        initializeAdmin();
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+
+            const admins = JSON.parse(localStorage.getItem('purely_admins') || '[]');
+            const admin = admins.find(a => a.email === email && a.password === password);
+
+            if (!admin) {
+                document.getElementById('email-error').textContent = 'Invalid admin credentials';
+                document.getElementById('email-error').style.display = 'block';
+                return;
+            }
+
+            localStorage.setItem('purely_admin_user', JSON.stringify(admin));
+            window.location.href = 'admin-dashboard.html';
+        }
+    </script>
+</body>
+</html>

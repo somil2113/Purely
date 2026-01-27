@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Options | Purely</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="js/supabase-config.js"></script>
+    <style>
+        .payment-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .payment-title {
+            text-align: center;
+            color: #4b0082;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        
+        .payment-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        
+        .payment-options {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .payment-option {
+            border: 2px solid #eee;
+            border-radius: 12px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            background: white;
+        }
+        
+        .payment-option:hover {
+            border-color: #4b0082;
+            box-shadow: 0 4px 12px rgba(75, 0, 130, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .payment-option.active {
+            border-color: #4b0082;
+            background: #f8f9fa;
+        }
+        
+        .payment-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .payment-option h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .payment-option p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+        
+        .order-summary {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            border: 1px solid #eee;
+        }
+        
+        .order-summary h4 {
+            color: #4b0082;
+            margin-bottom: 15px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .summary-item:last-child {
+            border: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #4b0082;
+            padding-top: 10px;
+        }
+        
+        .payment-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 40px;
+        }
+        
+        .btn-back {
+            background: white;
+            color: #4b0082;
+            border: 2px solid #4b0082;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-back:hover {
+            background: #f8f9fa;
+        }
+        
+        .btn-continue {
+            background: #4b0082;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-continue:hover:not(:disabled) {
+            background: #6b0fb8;
+        }
+        
+        .btn-continue.active {
+            opacity: 1;
+            cursor: pointer;
+        }
+        
+        .maintenance-message {
+            text-align: center;
+            color: #ff4444;
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+
+    <main>
+        <section class="hero">
+            <h1>Choose Payment Method</h1>
+            <p>Select your preferred way to pay</p>
+        </section>
+        
+        <section class="container">
+            <div class="payment-container">
+                <h2 class="payment-title">Payment Options</h2>
+                <p class="payment-subtitle">How would you like to pay?</p>
+                
+                <div class="order-summary">
+                    <h4>Order Total</h4>
+                    <div id="order-total" style="font-size: 1.3rem; color: #4b0082; font-weight: 700;">
+                        $0.00
+                    </div>
+                </div>
+                
+                <div class="payment-options">
+                    <div class="payment-option" onclick="selectPayment('cod')">
+                        <div class="payment-icon">💵</div>
+                        <h3>Cash on Delivery</h3>
+                        <p>Pay when you receive your order</p>
+                        <p style="font-size: 0.85rem; margin-top: 8px; color: #4b0082;">Available & Ready</p>
+                    </div>
+                    
+                    <div class="payment-option" onclick="selectPayment('netbanking')">
+                        <div class="payment-icon">🏦</div>
+                        <h3>Online Payment (NetBanking)</h3>
+                        <p>Pay using your bank account</p>
+                        <p class="maintenance-message">⚠️ Under Maintenance</p>
+                    </div>
+                </div>
+                
+                <div class="payment-actions">
+                    <button class="btn-back" onclick="window.location.href='cart.html'">Back to Cart</button>
+                    <button class="btn-continue" id="continue-btn" onclick="proceedPayment()" disabled>Continue</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="components/common.js"></script>
+    <script>
+        let selectedPayment = null;
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            updateOrderTotal();
+        });
+        
+        function updateOrderTotal() {
+            const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.1;
+            const total = (subtotal + tax).toFixed(2);
+            document.getElementById('order-total').textContent = '$' + total;
+        }
+        
+        function selectPayment(method) {
+            selectedPayment = method;
+            
+            // Remove active class from all options
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            
+            // Add active class to selected option
+            event.currentTarget.classList.add('active');
+            
+            // Check if it's netbanking (maintenance)
+            if (method === 'netbanking') {
+                document.getElementById('continue-btn').textContent = 'Under Maintenance';
+                document.getElementById('continue-btn').classList.remove('active');
+                document.getElementById('continue-btn').disabled = true;
+            } else {
+                document.getElementById('continue-btn').textContent = 'Complete Order';
+                document.getElementById('continue-btn').classList.add('active');
+                document.getElementById('continue-btn').disabled = false;
+            }
+        }
+        
+        function proceedPayment() {
+            if (!selectedPayment) {
+                alert('Please select a payment method');
+                return;
+            }
+            
+            if (selectedPayment === 'cod') {
+                // Get current user and address
+                const currentUser = JSON.parse(localStorage.getItem('purely_current_user'));
+                const addressData = JSON.parse(localStorage.getItem('checkout_address') || '{}');
+                
+                // Create order
+                const order = {
+                    id: 'ORD-' + Date.now(),
+                    customerId: currentUser ? currentUser.id : null,
+                    items: cart.items,
+                    total: (cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.1).toFixed(2),
+                    status: 'Pending',
+                    date: new Date().toISOString(),
+                    estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+                    paymentMethod: 'Cash on Delivery',
+                    shippingAddress: addressData
+                };
+                
+                // Save order
+                const orders = JSON.parse(localStorage.getItem('purely_orders') || '[]');
+                orders.push(order);
+                localStorage.setItem('purely_orders', JSON.stringify(orders));
+                
+                // Save invoice data
+                localStorage.setItem('invoiceData', JSON.stringify(cart.items));
+                
+                // Clear cart
+                cart.items = [];
+                cart.saveToStorage();
+                cart.updateCartDisplay();
+                
+                // Redirect to invoice page
+                window.location.href = 'invoice.html';
+            }
+        }
+    </script>
+</body>
+</html>

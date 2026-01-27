@@ -1,0 +1,65 @@
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="index.html" class="logo">Purely</a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="products.html">Products</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+        <div class="nav-icons">
+            <span>🔍</span>
+            <span id="cart-icon" style="display: flex; align-items: center; cursor: pointer;" onclick="window.location.href='cart.html'">
+                🛒
+                <span id="cart-count" class="cart-badge">0</span>
+            </span>
+            <button class="login-btn" id="login-btn" onclick="window.location.href='auth.html'">Login</button>
+            <button class="login-btn" id="user-profile-btn" style="display: none; background: #4b0082; color: white;" onclick="window.location.href='customer-dashboard.html'"></button>
+        </div>
+    </div>
+</nav>
+
+<script type="module">
+    import { getCurrentSession, logoutUser } from '../js/supabase-helpers.js';
+
+    async function updateNavbarAuth() {
+        const user = JSON.parse(localStorage.getItem('purely_current_user'));
+        const loginBtn = document.getElementById('login-btn');
+        const userBtn = document.getElementById('user-profile-btn');
+        
+        if (user) {
+            loginBtn.style.display = 'none';
+            userBtn.style.display = 'block';
+            userBtn.textContent = '👤 ' + user.name;
+            userBtn.onclick = () => {
+                // Show logout option
+                const confirmed = confirm('Click OK to go to dashboard or Cancel to logout');
+                if (confirmed) {
+                    window.location.href = 'customer-dashboard.html';
+                } else {
+                    handleLogout();
+                }
+            };
+        } else {
+            loginBtn.style.display = 'block';
+            userBtn.style.display = 'none';
+        }
+    }
+
+    async function handleLogout() {
+        const result = await logoutUser();
+        localStorage.removeItem('purely_current_user');
+        localStorage.removeItem('supabase_session');
+        updateNavbarAuth();
+        window.location.href = 'index.html';
+    }
+    
+    // Update on load
+    updateNavbarAuth();
+    
+    // Listen for storage changes
+    window.addEventListener('storage', updateNavbarAuth);
+    
+    // Make logout function globally available
+    window.handleLogout = handleLogout;
+</script>

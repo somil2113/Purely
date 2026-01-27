@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Invoice | Purely</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="js/supabase-config.js"></script>
+    <style>
+        .invoice-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #4b0082;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .invoice-logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4b0082;
+            letter-spacing: 1px;
+        }
+        
+        .invoice-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin: 0;
+        }
+        
+        .invoice-number {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .invoice-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .invoice-section h4 {
+            color: #4b0082;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .invoice-section p {
+            color: #333;
+            margin: 5px 0;
+            font-size: 0.95rem;
+        }
+        
+        .invoice-items {
+            margin-bottom: 40px;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .items-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #4b0082;
+        }
+        
+        .items-table th {
+            padding: 15px;
+            text-align: left;
+            color: #4b0082;
+            font-weight: 600;
+        }
+        
+        .items-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        
+        .items-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .item-name {
+            font-weight: 600;
+        }
+        
+        .price-right {
+            text-align: right;
+        }
+        
+        .invoice-totals {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 40px;
+        }
+        
+        .totals-box {
+            width: 300px;
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .total-row:last-child {
+            border: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #4b0082;
+            padding-top: 10px;
+        }
+        
+        .invoice-footer {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            border: 1px solid #eee;
+        }
+        
+        .invoice-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .btn-print {
+            background: #4b0082;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn-print:hover {
+            background: #6b0fb8;
+        }
+        
+        .btn-home {
+            background: white;
+            color: #4b0082;
+            border: 2px solid #4b0082;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-home:hover {
+            background: #f8f9fa;
+        }
+        
+        .success-banner {
+            background: #28a745;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            
+            #navbar-placeholder {
+                display: none;
+            }
+            
+            #footer-placeholder {
+                display: none;
+            }
+            
+            .hero {
+                display: none;
+            }
+            
+            .container {
+                padding: 0;
+            }
+            
+            .invoice-actions {
+                display: none;
+            }
+            
+            .success-banner {
+                display: none;
+            }
+            
+            .invoice-container {
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .invoice-details {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .items-table {
+                font-size: 0.9rem;
+            }
+            
+            .items-table th,
+            .items-table td {
+                padding: 10px;
+            }
+            
+            .invoice-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar-placeholder"></div>
+
+    <main>
+        <section class="hero">
+            <h1>Order Invoice</h1>
+            <p>Your purchase confirmation</p>
+        </section>
+        
+        <section class="container">
+            <div class="success-banner">
+                ✅ Order Successfully Placed! Payment Method: Cash on Delivery
+            </div>
+            
+            <div class="invoice-container">
+                <div class="invoice-header">
+                    <div>
+                        <div class="invoice-logo">Purely</div>
+                        <p style="color: #666; margin: 5px 0; font-size: 0.9rem;">Fashion Store</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <h2 class="invoice-title">INVOICE</h2>
+                        <p class="invoice-number">Order ID: <span id="order-id"></span></p>
+                        <p class="invoice-number">Date: <span id="order-date"></span></p>
+                    </div>
+                </div>
+                
+                <div class="invoice-details">
+                    <div>
+                        <div class="invoice-section">
+                            <h4>Ship To</h4>
+                            <p id="ship-fullname"></p>
+                            <p id="ship-street"></p>
+                            <p id="ship-city-state"></p>
+                            <p id="ship-email"></p>
+                            <p id="ship-phone"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="invoice-section">
+                            <h4>Payment Details</h4>
+                            <p><strong>Payment Method:</strong> Cash on Delivery</p>
+                            <p><strong>Status:</strong> Pending</p>
+                            <p><strong>Expected Delivery:</strong> <span id="delivery-date"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="invoice-items">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th class="price-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-items">
+                            <!-- Items will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="invoice-totals">
+                    <div class="totals-box">
+                        <div class="total-row">
+                            <span>Subtotal</span>
+                            <span id="subtotal">$0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Tax (10%)</span>
+                            <span id="tax">$0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Shipping</span>
+                            <span>FREE</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Total Amount</span>
+                            <span id="total">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="invoice-footer">
+                    <p><strong>Thank you for your order!</strong></p>
+                    <p style="font-size: 0.9rem;">Your items will be delivered within 5-7 business days.<br>
+                    Please keep this invoice for your records.</p>
+                </div>
+                
+                <div class="invoice-actions">
+                    <button class="btn-print" onclick="window.print()">🖨️ Print Invoice</button>
+                    <button class="btn-home" onclick="window.location.href='index.html'">Back to Home</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="components/common.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            generateInvoice();
+        });
+        
+        function generateInvoice() {
+            // Generate order ID
+            const orderId = 'ORD-' + Date.now();
+            document.getElementById('order-id').textContent = orderId;
+            
+            // Set dates
+            const today = new Date();
+            const deliveryDate = new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 days later
+            
+            document.getElementById('order-date').textContent = today.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            document.getElementById('delivery-date').textContent = deliveryDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // Get the most recent order (just created)
+            const orders = JSON.parse(localStorage.getItem('purely_orders') || '[]');
+            const lastOrder = orders[orders.length - 1];
+            
+            // Load shipping address from the order or checkout_address
+            let addressData = null;
+            if (lastOrder && lastOrder.shippingAddress) {
+                addressData = lastOrder.shippingAddress;
+            } else {
+                addressData = JSON.parse(localStorage.getItem('checkout_address') || '{}');
+            }
+            
+            if (addressData && addressData.firstName) {
+                document.getElementById('ship-fullname').textContent = `${addressData.firstName} ${addressData.lastName}`;
+                document.getElementById('ship-street').textContent = addressData.address;
+                document.getElementById('ship-city-state').textContent = `${addressData.city}, ${addressData.state} ${addressData.zipcode} ${addressData.country}`;
+                document.getElementById('ship-email').textContent = `Email: ${addressData.email}`;
+                document.getElementById('ship-phone').textContent = `Phone: ${addressData.phone}`;
+            }
+            
+            // Check if there are items in cart (invoice data)
+            const invoiceData = localStorage.getItem('invoiceData');
+            let items = cart.items;
+            
+            if (invoiceData) {
+                items = JSON.parse(invoiceData);
+                localStorage.removeItem('invoiceData');
+            }
+            
+            // Populate invoice items
+            const itemsContainer = document.getElementById('invoice-items');
+            let subtotal = 0;
+            
+            items.forEach(item => {
+                const itemTotal = (item.price * item.quantity).toFixed(2);
+                subtotal += parseFloat(itemTotal);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="item-name">${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td class="price-right">$${item.price.toFixed(2)}</td>
+                    <td class="price-right">$${itemTotal}</td>
+                `;
+                itemsContainer.appendChild(row);
+            });
+            
+            // Calculate totals
+            const tax = (subtotal * 0.1).toFixed(2);
+            const total = (subtotal + parseFloat(tax)).toFixed(2);
+            
+            // Update totals display
+            document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('tax').textContent = '$' + tax;
+            document.getElementById('total').textContent = '$' + total;
+            
+            // Save invoice data to localStorage for future reference
+            localStorage.setItem('lastInvoice', JSON.stringify({
+                orderId: orderId,
+                date: today,
+                items: items,
+                subtotal: subtotal,
+                tax: tax,
+                total: total
+            }));
+        }
+    </script>
+</body>
+</html>

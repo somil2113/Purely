@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login / Sign Up | Purely</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .auth-container {
+            max-width: 450px;
+            margin: 60px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .auth-tab.active {
+            color: #4b0082;
+            border-bottom-color: #4b0082;
+        }
+
+        .auth-content {
+            display: none;
+        }
+
+        .auth-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4b0082;
+            box-shadow: 0 0 5px rgba(75, 0, 130, 0.2);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #5d0099;
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: #f44336;
+            font-size: 0.875rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-message {
+            background: #c8e6c9;
+            color: #2e7d32;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .form-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .form-link a {
+            color: #4b0082;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .form-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main>
+        <section class="auth-container">
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+                <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
+            </div>
+
+            <div class="auth-forms">
+                <!-- Login Form -->
+                <div id="login" class="auth-content active">
+                    <h2 style="text-align: center; color: #333; margin-bottom: 25px;">Login</h2>
+                    <div class="success-message" id="login-success">Login successful! Redirecting...</div>
+                    
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label for="login-email">Email Address</label>
+                            <input type="email" id="login-email" required placeholder="your@email.com">
+                            <div class="error-message" id="login-email-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" required placeholder="Your password">
+                            <div class="error-message" id="login-password-error"></div>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Login</button>
+                    </form>
+
+                    <div class="form-link">
+                        Don't have an account? <a onclick="switchTab('signup')">Sign Up</a>
+                    </div>
+                </div>
+
+                <!-- Sign Up Form -->
+                <div id="signup" class="auth-content">
+                    <h2 style="text-align: center; color: #333; margin-bottom: 25px;">Create Account</h2>
+                    <div class="success-message" id="signup-success">Account created successfully! Please login.</div>
+                    
+                    <form onsubmit="handleSignup(event)">
+                        <div class="form-group">
+                            <label for="signup-name">Full Name</label>
+                            <input type="text" id="signup-name" required placeholder="Your full name">
+                            <div class="error-message" id="signup-name-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signup-email">Email Address</label>
+                            <input type="email" id="signup-email" required placeholder="your@email.com">
+                            <div class="error-message" id="signup-email-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signup-phone">Phone Number</label>
+                            <input type="tel" id="signup-phone" required placeholder="Your phone number">
+                            <div class="error-message" id="signup-phone-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signup-password">Password</label>
+                            <input type="password" id="signup-password" required placeholder="Create a password">
+                            <div class="error-message" id="signup-password-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signup-confirm-password">Confirm Password</label>
+                            <input type="password" id="signup-confirm-password" required placeholder="Confirm your password">
+                            <div class="error-message" id="signup-confirm-error"></div>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Create Account</button>
+                    </form>
+
+                    <div class="form-link">
+                        Already have an account? <a onclick="switchTab('login')">Login</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="components/common.js"></script>
+
+    <script>
+        const SUPABASE_URL = 'https://srcnlbdybejvcbvvdpbk.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyY25sYmR5YmVqdmNidnZkcGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0OTU3MDYsImV4cCI6MjA4NTA3MTcwNn0.qLj0ClnWgAfxbtZ1P6O2c6TELdevpqerqOnjKGqhaZ8';
+
+        let supabaseClient = null;
+
+        function initSupabase() {
+            if (!supabaseClient && window.supabase) {
+                try {
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    console.log('✓ Supabase initialized');
+                    return supabaseClient;
+                } catch (error) {
+                    console.error('Failed to initialize Supabase:', error);
+                    throw error;
+                }
+            }
+            return supabaseClient;
+        }
+
+        async function registerUser(email, password, name, phone) {
+            try {
+                const sb = initSupabase();
+                if (!sb) throw new Error('Supabase not initialized');
+
+                const { data, error } = await sb.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: { full_name: name, phone }
+                    }
+                });
+
+                if (error) throw error;
+
+                // Create user profile
+                const { data: userData, error: userError } = await sb
+                    .from('users')
+                    .insert([{ id: data.user.id, email, name, phone }])
+                    .select();
+
+                if (userError) throw userError;
+
+                return { success: true, user: data.user };
+            } catch (error) {
+                console.error('Registration error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function loginUser(email, password) {
+            try {
+                const sb = initSupabase();
+                if (!sb) throw new Error('Supabase not initialized');
+
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+                if (error) throw error;
+
+                // Fetch user profile
+                const { data: userProfile } = await sb
+                    .from('users')
+                    .select('*')
+                    .eq('id', data.user.id)
+                    .single();
+
+                return {
+                    success: true,
+                    user: userProfile || { id: data.user.id, email: data.user.email },
+                    session: data.session
+                };
+            } catch (error) {
+                console.error('Login error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.auth-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.auth-tab').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Clear all error messages
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('form').forEach(form => form.reset());
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            // Clear previous errors
+            document.getElementById('login-email-error').style.display = 'none';
+            document.getElementById('login-password-error').style.display = 'none';
+
+            const result = await loginUser(email, password);
+
+            if (!result.success) {
+                document.getElementById('login-email-error').textContent = result.error || 'Login failed';
+                document.getElementById('login-email-error').style.display = 'block';
+                return;
+            }
+
+            // Save to localStorage
+            localStorage.setItem('purely_current_user', JSON.stringify(result.user));
+            localStorage.setItem('supabase_session', JSON.stringify(result.session));
+
+            document.getElementById('login-success').style.display = 'block';
+            window.location.href = 'customer-dashboard.html';
+        }
+
+        async function handleSignup(e) {
+            e.preventDefault();
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const phone = document.getElementById('signup-phone').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+
+            // Validation
+            if (password.length < 6) {
+                document.getElementById('signup-password-error').textContent = 'Password must be at least 6 characters';
+                document.getElementById('signup-password-error').style.display = 'block';
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                document.getElementById('signup-confirm-error').textContent = 'Passwords do not match';
+                document.getElementById('signup-confirm-error').style.display = 'block';
+                return;
+            }
+
+            const result = await registerUser(email, password, name, phone);
+
+            if (!result.success) {
+                document.getElementById('signup-email-error').textContent = result.error || 'Signup failed';
+                document.getElementById('signup-email-error').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('signup-success').style.display = 'block';
+            document.querySelector('.auth-forms form').reset();
+            switchTab('login');
+        }
+
+        // Make functions globally available
+        window.switchTab = switchTab;
+        window.handleLogin = handleLogin;
+        window.handleSignup = handleSignup;
+    </script>
+</body>
+</html>

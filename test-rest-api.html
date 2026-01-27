@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Direct Supabase Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; line-height: 1.6; }
+        .log { padding: 5px 10px; margin: 5px 0; border-radius: 3px; }
+        .ok { background: #cfffcf; }
+        .error { background: #ffcccc; }
+    </style>
+</head>
+<body>
+    <h1>Direct Supabase REST API Test</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg, ok = true) {
+            const div = document.createElement('div');
+            div.className = 'log ' + (ok ? 'ok' : 'error');
+            div.textContent = msg;
+            output.appendChild(div);
+            console.log(msg);
+        }
+
+        const SUPABASE_URL = 'https://srcnlbdybejvcbvvdpbk.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyY25sYmR5YmVqdmNidnZkcGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0OTU3MDYsImV4cCI6MjA4NTA3MTcwNn0.qLj0ClnWgAfxbtZ1P6O2c6TELdevpqerqOnjKGqhaZ8';
+
+        // Test fetching products directly via REST API
+        fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => {
+            log(`Status: ${res.status} ${res.statusText}`, res.ok);
+            return res.json();
+        })
+        .then(data => {
+            if (Array.isArray(data)) {
+                log(`✓ Got ${data.length} products!`, true);
+                if (data.length > 0) {
+                    log(`First product: ${JSON.stringify(data[0])}`, true);
+                }
+                // Display all products
+                data.forEach((p, i) => {
+                    log(`  ${i+1}. ${p.name} - $${p.price}`, true);
+                });
+            } else {
+                log(`Unexpected response: ${JSON.stringify(data)}`, false);
+            }
+        })
+        .catch(err => {
+            log(`Error: ${err.message}`, false);
+        });
+    </script>
+</body>
+</html>

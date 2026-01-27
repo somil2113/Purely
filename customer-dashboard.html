@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Dashboard | Purely</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="js/supabase-config.js"></script>
+    <style>
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+            margin: 30px 0;
+            min-height: 70vh;
+        }
+
+        .dashboard-sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .customer-profile {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .customer-avatar {
+            width: 80px;
+            height: 80px;
+            background: #4b0082;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            margin: 0 auto 15px;
+        }
+
+        .customer-name {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .customer-email {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu button {
+            width: 100%;
+            text-align: left;
+            padding: 12px 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu button:hover {
+            background: #f0f0f0;
+            color: #4b0082;
+        }
+
+        .sidebar-menu button.active {
+            background: #4b0082;
+            color: white;
+        }
+
+        .logout-btn {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #cc0000;
+        }
+
+        .dashboard-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section-title {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #4b0082;
+            padding-bottom: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .order-card {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .order-id {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .order-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .order-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .order-status.shipped {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .order-status.delivered {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .order-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .order-detail-item {
+            font-size: 0.9rem;
+        }
+
+        .order-detail-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .order-detail-value {
+            color: #333;
+            margin-top: 3px;
+        }
+
+        .track-btn {
+            background: #4b0082;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .track-btn:hover {
+            background: #6b0fb8;
+        }
+
+        .wishlist-item {
+            display: grid;
+            grid-template-columns: 100px 1fr auto;
+            gap: 20px;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .wishlist-image {
+            width: 100px;
+            height: 100px;
+            background: #ddd;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .wishlist-details h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+
+        .wishlist-details p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .remove-btn {
+            background: #ff4444;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .coupon-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .coupon-code {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .coupon-discount {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .copy-btn {
+            background: white;
+            color: #667eea;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .faq-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 15px;
+            background: #f0f0f0;
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-question:hover {
+            background: #e0e0e0;
+        }
+
+        .faq-answer {
+            padding: 15px;
+            color: #666;
+            display: none;
+            border-top: 1px solid #eee;
+        }
+
+        .faq-answer.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-sidebar {
+                position: static;
+            }
+
+            .order-details {
+                grid-template-columns: 1fr;
+            }
+
+            .wishlist-item {
+                grid-template-columns: 80px 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main>
+        <section class="container">
+            <div class="dashboard-container">
+                <!-- Sidebar -->
+                <div class="dashboard-sidebar">
+                    <div class="customer-profile">
+                        <div class="customer-avatar" id="avatar">👤</div>
+                        <div class="customer-name" id="customer-name">Name</div>
+                        <div class="customer-email" id="customer-email">email@example.com</div>
+                    </div>
+
+                    <ul class="sidebar-menu">
+                        <li><button class="menu-btn active" onclick="switchSection('orders')">📦 My Orders</button></li>
+                        <li><button class="menu-btn" onclick="switchSection('track')">🚚 Track Order</button></li>
+                        <li><button class="menu-btn" onclick="switchSection('wishlist')">❤️ Wishlist</button></li>
+                        <li><button class="menu-btn" onclick="switchSection('coupons')">🎟️ Coupons</button></li>
+                        <li><button class="menu-btn" onclick="switchSection('help')">❓ Help Center</button></li>
+                    </ul>
+
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+
+                <!-- Content -->
+                <div class="dashboard-content">
+                    <!-- Orders Section -->
+                    <div id="orders" class="content-section active">
+                        <h2 class="section-title">My Orders</h2>
+                        <div id="orders-list"></div>
+                    </div>
+
+                    <!-- Track Order Section -->
+                    <div id="track" class="content-section">
+                        <h2 class="section-title">Track Your Order</h2>
+                        <div style="margin-bottom: 20px;">
+                            <input type="text" id="track-input" placeholder="Enter Order ID (e.g., ORD-1234567890)" style="padding: 12px; width: 100%; border: 1px solid #ddd; border-radius: 6px;">
+                            <button onclick="trackOrder()" style="margin-top: 10px; padding: 10px 20px; background: #4b0082; color: white; border: none; border-radius: 6px; cursor: pointer;">Track</button>
+                        </div>
+                        <div id="track-result"></div>
+                    </div>
+
+                    <!-- Wishlist Section -->
+                    <div id="wishlist" class="content-section">
+                        <h2 class="section-title">My Wishlist</h2>
+                        <div id="wishlist-list"></div>
+                    </div>
+
+                    <!-- Coupons Section -->
+                    <div id="coupons" class="content-section">
+                        <h2 class="section-title">Available Coupons</h2>
+                        <div id="coupons-list"></div>
+                    </div>
+
+                    <!-- Help Center Section -->
+                    <div id="help" class="content-section">
+                        <h2 class="section-title">Help Center</h2>
+                        <div id="faq-list"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="components/common.js"></script>
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('purely_current_user'));
+            if (!user) {
+                window.location.href = 'auth.html';
+                return;
+            }
+
+            currentUser = user;
+            document.getElementById('customer-name').textContent = user.name;
+            document.getElementById('customer-email').textContent = user.email;
+            document.getElementById('avatar').textContent = user.name.charAt(0).toUpperCase();
+
+            loadOrders();
+            loadWishlist();
+            loadCoupons();
+            loadHelp();
+        });
+
+        function switchSection(section) {
+            document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.menu-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function loadOrders() {
+            const orders = JSON.parse(localStorage.getItem('purely_orders') || '[]').filter(o => o.customerId === currentUser.id);
+            const list = document.getElementById('orders-list');
+
+            if (orders.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No orders yet. <a href="products.html" style="color: #4b0082; text-decoration: none;">Start shopping</a></p></div>';
+                return;
+            }
+
+            list.innerHTML = orders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">Order #${order.id}</div>
+                        <span class="order-status ${order.status.toLowerCase()}">${order.status}</span>
+                    </div>
+                    <div class="order-details">
+                        <div class="order-detail-item">
+                            <div class="order-detail-label">Order Date</div>
+                            <div class="order-detail-value">${new Date(order.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="order-detail-item">
+                            <div class="order-detail-label">Total Amount</div>
+                            <div class="order-detail-value" style="color: #4b0082; font-weight: 600;">$${order.total}</div>
+                        </div>
+                        <div class="order-detail-item">
+                            <div class="order-detail-label">Items</div>
+                            <div class="order-detail-value">${order.items.length} items</div>
+                        </div>
+                        <div class="order-detail-item">
+                            <div class="order-detail-label">Expected Delivery</div>
+                            <div class="order-detail-value">${new Date(order.estimatedDelivery).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    <button class="track-btn" onclick="trackOrderById('${order.id}')">Track Order</button>
+                </div>
+            `).join('');
+        }
+
+        function trackOrder() {
+            const orderId = document.getElementById('track-input').value.trim();
+            if (!orderId) {
+                alert('Please enter an Order ID');
+                return;
+            }
+            trackOrderById(orderId);
+        }
+
+        function trackOrderById(orderId) {
+            const orders = JSON.parse(localStorage.getItem('purely_orders') || '[]');
+            const order = orders.find(o => o.id === orderId && o.customerId === currentUser.id);
+
+            const result = document.getElementById('track-result');
+            if (!order) {
+                result.innerHTML = '<div class="empty-state"><p>Order not found</p></div>';
+                return;
+            }
+
+            const statuses = ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+            const currentStatusIndex = statuses.indexOf(order.status);
+
+            const addressHtml = order.shippingAddress ? `
+                <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid #667eea;">
+                    <strong>Shipping Address:</strong><br>
+                    ${order.shippingAddress.firstName} ${order.shippingAddress.lastName}<br>
+                    ${order.shippingAddress.address}<br>
+                    ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zipcode}<br>
+                    ${order.shippingAddress.country}<br>
+                    <strong>Phone:</strong> ${order.shippingAddress.phone}<br>
+                    <strong>Email:</strong> ${order.shippingAddress.email}
+                </div>
+            ` : '';
+
+            result.innerHTML = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                    <h3 style="color: #333; margin-bottom: 20px;">Order Status Timeline</h3>
+                    <div style="position: relative; padding: 20px 0;">
+                        ${statuses.map((status, index) => `
+                            <div style="display: flex; margin-bottom: 20px;">
+                                <div style="width: 30px; height: 30px; background: ${index <= currentStatusIndex ? '#4b0082' : '#ddd'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; flex-shrink: 0; margin-right: 15px;">
+                                    ${index < currentStatusIndex ? '✓' : (index === currentStatusIndex ? '▶' : '')}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: #333;">${status}</div>
+                                    <div style="color: #666; font-size: 0.9rem;">Expected: ${new Date(order.date).toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 20px; border-left: 4px solid #4b0082;">
+                        <strong>Current Status:</strong> ${order.status}<br>
+                        <strong>Estimated Delivery:</strong> ${new Date(order.estimatedDelivery).toLocaleDateString()}
+                    </div>
+                    ${addressHtml}
+                </div>
+            `;
+        }
+
+        function loadWishlist() {
+            const wishlist = currentUser.wishlist || [];
+            const list = document.getElementById('wishlist-list');
+
+            if (wishlist.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❤️</div><p>Your wishlist is empty</p></div>';
+                return;
+            }
+
+            list.innerHTML = wishlist.map(item => `
+                <div class="wishlist-item">
+                    <img src="${item.image}" alt="${item.name}" class="wishlist-image">
+                    <div class="wishlist-details">
+                        <h4>${item.name}</h4>
+                        <p>${item.description}</p>
+                        <p style="color: #4b0082; font-weight: 600;">$${item.price}</p>
+                    </div>
+                    <button class="remove-btn" onclick="removeFromWishlist(${item.id})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFromWishlist(itemId) {
+            const users = JSON.parse(localStorage.getItem('purely_users') || '[]');
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            users[userIndex].wishlist = users[userIndex].wishlist.filter(w => w.id !== itemId);
+            localStorage.setItem('purely_users', JSON.stringify(users));
+            currentUser = users[userIndex];
+            loadWishlist();
+        }
+
+        function loadCoupons() {
+            const coupons = currentUser.coupons || [];
+            const list = document.getElementById('coupons-list');
+
+            if (coupons.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>No coupons available</p></div>';
+                return;
+            }
+
+            const couponDetails = {
+                'WELCOME10': { discount: '10% off', desc: 'On your first purchase' },
+                'SUMMER20': { discount: '20% off', desc: 'On summer collection' },
+                'SAVE50': { discount: '$50 off', desc: 'On orders above $200' }
+            };
+
+            list.innerHTML = coupons.map(code => `
+                <div class="coupon-card">
+                    <div>
+                        <div class="coupon-code">${code}</div>
+                        <div class="coupon-discount">${couponDetails[code]?.desc || 'Special offer'}</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyCoupon('${code}')">Copy</button>
+                </div>
+            `).join('');
+        }
+
+        function copyCoupon(code) {
+            navigator.clipboard.writeText(code);
+            alert('Coupon code copied!');
+        }
+
+        function loadHelp() {
+            const faqList = document.getElementById('faq-list');
+            const faqs = [
+                { q: 'How do I track my order?', a: 'Go to the "Track Order" section and enter your Order ID to see real-time tracking information.' },
+                { q: 'What is your return policy?', a: 'We offer 30-day returns for unused items. Please contact our support team for more details.' },
+                { q: 'How long does delivery take?', a: 'Standard delivery takes 5-7 business days. Express delivery options are available at checkout.' },
+                { q: 'Can I cancel my order?', a: 'Orders can be cancelled within 24 hours of placement. Please contact support immediately.' },
+                { q: 'Do you ship internationally?', a: 'Currently, we ship only within the country. International shipping coming soon!' },
+                { q: 'How do I use a coupon?', a: 'Copy the coupon code and apply it at checkout for instant discount.' }
+            ];
+
+            faqList.innerHTML = faqs.map((faq, idx) => `
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(${idx})">
+                        <span>${faq.q}</span>
+                        <span>+</span>
+                    </div>
+                    <div class="faq-answer" id="faq-${idx}">${faq.a}</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleFaq(idx) {
+            const answer = document.getElementById(`faq-${idx}`);
+            answer.classList.toggle('active');
+        }
+
+        function logout() {
+            localStorage.removeItem('purely_current_user');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout | Purely</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="js/supabase-config.js"></script>
+    <style>
+        .checkout-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .checkout-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .step {
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .step.active {
+            background: #4b0082;
+            color: white;
+        }
+
+        .checkout-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .checkout-form {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4b0082;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4b0082;
+            box-shadow: 0 0 5px rgba(75, 0, 130, 0.2);
+        }
+
+        .checkout-summary {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-title {
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95rem;
+        }
+
+        .summary-item.total {
+            border: none;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #4b0082;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            background: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .checkout-btn:hover {
+            background: #6b0fb8;
+        }
+
+        .cart-item-mini {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-content {
+                grid-template-columns: 1fr;
+            }
+
+            .checkout-summary {
+                position: static;
+            }
+
+            .checkout-steps {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main>
+        <section class="container checkout-container">
+            <h1 style="text-align: center; margin-bottom: 30px;">Checkout</h1>
+
+            <div class="checkout-steps">
+                <div class="step active">1. Shipping Address</div>
+                <div class="step">2. Payment</div>
+                <div class="step">3. Confirmation</div>
+            </div>
+
+            <div class="checkout-content">
+                <!-- Checkout Form -->
+                <div class="checkout-form">
+                    <h2 class="section-title">Shipping Address</h2>
+
+                    <form onsubmit="proceedToPayment(event)">
+                        <!-- Personal Info -->
+                        <h3 style="color: #333; font-size: 1.1rem; margin-top: 20px; margin-bottom: 15px;">Personal Information</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name *</label>
+                                <input type="text" id="firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name *</label>
+                                <input type="text" id="lastName" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="email">Email Address *</label>
+                                <input type="email" id="email" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="phone">Phone Number *</label>
+                                <input type="tel" id="phone" required>
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <h3 style="color: #333; font-size: 1.1rem; margin-top: 25px; margin-bottom: 15px;">Delivery Address</h3>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label for="address">Street Address *</label>
+                                <input type="text" id="address" placeholder="123 Main Street" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="city">City *</label>
+                                <input type="text" id="city" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="state">State/Province *</label>
+                                <input type="text" id="state" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="zipcode">Zip/Postal Code *</label>
+                                <input type="text" id="zipcode" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="country">Country *</label>
+                                <input type="text" id="country" value="United States" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="billingSame" checked> Billing address same as shipping
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="checkout-btn">Continue to Payment</button>
+                    </form>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="checkout-summary">
+                    <div class="summary-title">Order Summary</div>
+
+                    <div id="summary-items"></div>
+
+                    <div class="summary-item">
+                        <span>Subtotal</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Tax (10%)</span>
+                        <span id="tax">$0.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Shipping</span>
+                        <span id="shipping">FREE</span>
+                    </div>
+                    <div class="summary-item total">
+                        <span>Total</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="components/common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadOrderSummary();
+            
+            // Pre-fill email if user is logged in
+            const user = JSON.parse(localStorage.getItem('purely_current_user'));
+            if (user) {
+                document.getElementById('email').value = user.email;
+                document.getElementById('firstName').value = user.name.split(' ')[0];
+                document.getElementById('lastName').value = user.name.split(' ').slice(1).join(' ') || '';
+                document.getElementById('phone').value = user.phone;
+            }
+        });
+
+        function loadOrderSummary() {
+            const items = cart.items;
+            const container = document.getElementById('summary-items');
+
+            if (items.length === 0) {
+                window.location.href = 'cart.html';
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="cart-item-mini">
+                    <span>${item.name} x ${item.quantity}</span>
+                    <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const taxAmount = subtotal * 0.1;
+            const total = subtotal + taxAmount;
+
+            document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('tax').textContent = '$' + taxAmount.toFixed(2);
+            document.getElementById('total').textContent = '$' + total.toFixed(2);
+        }
+
+        function proceedToPayment(e) {
+            e.preventDefault();
+
+            // Collect address data
+            const addressData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                zipcode: document.getElementById('zipcode').value,
+                country: document.getElementById('country').value
+            };
+
+            // Save address to localStorage
+            localStorage.setItem('checkout_address', JSON.stringify(addressData));
+
+            // Proceed to payment
+            window.location.href = 'payment.html';
+        }
+    </script>
+</body>
+</html>
