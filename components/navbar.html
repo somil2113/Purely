@@ -13,53 +13,83 @@
                 🛒
                 <span id="cart-count" class="cart-badge">0</span>
             </span>
-            <button class="login-btn" id="login-btn" onclick="window.location.href='auth.html'">Login</button>
-            <button class="login-btn" id="user-profile-btn" style="display: none; background: #4b0082; color: white;" onclick="window.location.href='customer-dashboard.html'"></button>
+            <button class="login-btn" id="login-btn" onclick="window.handleLoginClick ? window.handleLoginClick() : window.location.href='auth.html'">Login</button>
+            <button class="login-btn" id="user-profile-btn" style="display: none; background: #4b0082; color: white;" onclick="window.handleProfileClick ? window.handleProfileClick() : null"></button>
         </div>
     </div>
 </nav>
 
-<script type="module">
-    import { getCurrentSession, logoutUser } from '../js/supabase-helpers.js';
-
-    async function updateNavbarAuth() {
+<script>
+    // Define functions in window scope immediately
+    window.handleLoginClick = function() {
         const user = JSON.parse(localStorage.getItem('purely_current_user'));
+        const isAdmin = localStorage.getItem('purely_is_admin') === 'true';
+        
+        if (user) {
+            const destination = isAdmin ? 'admin-dashboard.html' : 'customer-dashboard.html';
+            window.location.href = destination;
+        } else {
+            window.location.href = 'auth.html';
+        }
+    };
+
+    window.handleProfileClick = function() {
+        const isAdmin = localStorage.getItem('purely_is_admin') === 'true';
+        const confirmed = confirm('Click OK to go to dashboard or Cancel to logout');
+        if (confirmed) {
+            const destination = isAdmin ? 'admin-dashboard.html' : 'customer-dashboard.html';
+            window.location.href = destination;
+        } else {
+            window.handleLogout();
+        }
+    };
+
+    window.handleLogout = function() {
+        localStorage.removeItem('purely_current_user');
+        localStorage.removeItem('supabase_session');
+        localStorage.removeItem('purely_is_admin');
+        window.updateNavbarAuth();
+        window.location.href = 'index.html';
+    };
+
+    window.updateNavbarAuth = function() {
+        const user = JSON.parse(localStorage.getItem('purely_current_user'));
+        const isAdmin = localStorage.getItem('purely_is_admin') === 'true';
         const loginBtn = document.getElementById('login-btn');
         const userBtn = document.getElementById('user-profile-btn');
         
-        if (user) {
-            loginBtn.style.display = 'none';
-            userBtn.style.display = 'block';
-            userBtn.textContent = '👤 ' + user.name;
-            userBtn.onclick = () => {
-                // Show logout option
-                const confirmed = confirm('Click OK to go to dashboard or Cancel to logout');
-                if (confirmed) {
-                    window.location.href = 'customer-dashboard.html';
-                } else {
-                    handleLogout();
-                }
-            };
+        console.log('Updating navbar auth - user:', user ? user.name : 'none', 'admin:', isAdmin);
+        
+        if (loginBtn && userBtn) {
+            if (user && user.name) {
+                loginBtn.style.display = 'none';
+                userBtn.style.display = 'block';
+                const roleLabel = isAdmin ? ' (Admin)' : '';
+                userBtn.textContent = '👤 ' + user.name + roleLabel;
+                console.log('✓ User logged in as:', user.name);
+            } else {
+                loginBtn.style.display = 'block';
+                userBtn.style.display = 'none';
+                console.log('✓ User not logged in');
+            }
         } else {
-            loginBtn.style.display = 'block';
-            userBtn.style.display = 'none';
+            console.warn('Navbar elements not found yet');
         }
-    }
-
-    async function handleLogout() {
-        const result = await logoutUser();
-        localStorage.removeItem('purely_current_user');
-        localStorage.removeItem('supabase_session');
-        updateNavbarAuth();
-        window.location.href = 'index.html';
-    }
+    };
     
-    // Update on load
-    updateNavbarAuth();
+    // Call update immediately
+    window.updateNavbarAuth();
     
-    // Listen for storage changes
-    window.addEventListener('storage', updateNavbarAuth);
+    // Listen for storage changes (login from other tabs)
+    window.addEventListener('storage', window.updateNavbarAuth);
     
-    // Make logout function globally available
-    window.handleLogout = handleLogout;
+    // Also add observer for when localStorage changes in same window
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = function(key, value) {
+        if (key === 'purely_current_user' || key === 'purely_is_admin') {
+            console.log('localStorage changed:', key);
+            window.updateNavbarAuth();
+        }
+        return originalSetItem.call(localStorage, key, value);
+    };
 </script>

@@ -363,11 +363,11 @@
                     </div>
 
                     <ul class="sidebar-menu">
-                        <li><button class="menu-btn active" onclick="switchSection('orders')">📦 My Orders</button></li>
-                        <li><button class="menu-btn" onclick="switchSection('track')">🚚 Track Order</button></li>
-                        <li><button class="menu-btn" onclick="switchSection('wishlist')">❤️ Wishlist</button></li>
-                        <li><button class="menu-btn" onclick="switchSection('coupons')">🎟️ Coupons</button></li>
-                        <li><button class="menu-btn" onclick="switchSection('help')">❓ Help Center</button></li>
+                        <li><button class="menu-btn active" onclick="switchSection('orders', this)">📦 My Orders</button></li>
+                        <li><button class="menu-btn" onclick="switchSection('track', this)">🚚 Track Order</button></li>
+                        <li><button class="menu-btn" onclick="switchSection('wishlist', this)">❤️ Wishlist</button></li>
+                        <li><button class="menu-btn" onclick="switchSection('coupons', this)">🎟️ Coupons</button></li>
+                        <li><button class="menu-btn" onclick="switchSection('help', this)">❓ Help Center</button></li>
                     </ul>
 
                     <button class="logout-btn" onclick="logout()">Logout</button>
@@ -418,7 +418,20 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="components/common.js"></script>
     <script>
+        const SUPABASE_URL = 'https://srcnlbdybejvcbvvdpbk.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyY25sYmR5YmVqdmNidnZkcGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0OTU3MDYsImV4cCI6MjA4NTA3MTcwNn0.qLj0ClnWgAfxbtZ1P6O2c6TELdevpqerqOnjKGqhaZ8';
+        
+        let supabaseClient = null;
         let currentUser = null;
+        let authUser = null;
+
+        function initSupabase() {
+            if (!supabaseClient && window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('✓ Supabase initialized');
+            }
+            return supabaseClient;
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const user = JSON.parse(localStorage.getItem('purely_current_user'));
@@ -427,22 +440,76 @@
                 return;
             }
 
+            authUser = user;
             currentUser = user;
-            document.getElementById('customer-name').textContent = user.name;
-            document.getElementById('customer-email').textContent = user.email;
-            document.getElementById('avatar').textContent = user.name.charAt(0).toUpperCase();
-
-            loadOrders();
-            loadWishlist();
-            loadCoupons();
-            loadHelp();
+            
+            // Initialize Supabase and fetch full user profile
+            const sb = initSupabase();
+            if (!sb) {
+                console.error('Failed to initialize Supabase');
+                // Display what we have from auth at minimum
+                document.getElementById('customer-name').textContent = user.email ? user.email.split('@')[0] : 'User';
+                document.getElementById('customer-email').textContent = user.email || 'email@example.com';
+                document.getElementById('avatar').textContent = (user.email || 'U').charAt(0).toUpperCase();
+                return;
+            }
+            
+            // Fetch user profile from users table to get name and phone
+            sb.from('users')
+                .select('*')
+                .eq('id', user.id)
+                .single()
+                .then(({ data: userProfile, error }) => {
+                    if (error) {
+                        console.error('Error fetching user profile:', error);
+                        // Display auth user info (email from auth)
+                        document.getElementById('customer-name').textContent = user.email.split('@')[0];
+                        document.getElementById('customer-email').textContent = user.email;
+                        document.getElementById('avatar').textContent = user.email.charAt(0).toUpperCase();
+                    } else {
+                        // Display full profile from users table, but use auth email for consistency
+                        document.getElementById('customer-name').textContent = userProfile.name || user.email.split('@')[0];
+                        document.getElementById('customer-email').textContent = user.email;  // Always use auth email
+                        document.getElementById('avatar').textContent = (userProfile.name || user.email).charAt(0).toUpperCase();
+                        currentUser = { ...user, ...userProfile };  // Merge both objects
+                    }
+                    
+                    // Initialize Supabase for wishlist sync
+                    if (window.wishlist && user.id) {
+                        console.log('Dashboard: Initializing wishlist sync with user ID:', user.id);
+                        window.wishlist.setSupabase(sb, user.id);
+                        console.log('✓ Wishlist Supabase sync initialized');
+                        // Wait longer for async sync to complete before loading wishlist
+                        setTimeout(() => {
+                            console.log('Dashboard: Loading sections (2 second wait)');
+                            console.log('Wishlist items after sync:', window.wishlist.items);
+                            loadOrders();
+                            loadWishlist();
+                            loadCoupons();
+                            loadHelp();
+                        }, 2000);
+                    } else {
+                        console.warn('Wishlist not ready or no user ID');
+                        loadOrders();
+                        loadWishlist();
+                        loadCoupons();
+                        loadHelp();
+                    }
+                });
         });
 
-        function switchSection(section) {
+        function switchSection(section, element) {
             document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.menu-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(section).classList.add('active');
-            event.target.classList.add('active');
+            
+            const sectionEl = document.getElementById(section);
+            if (sectionEl) {
+                sectionEl.classList.add('active');
+            }
+            
+            if (element) {
+                element.classList.add('active');
+            }
         }
 
         function loadOrders() {
@@ -543,8 +610,13 @@
         }
 
         function loadWishlist() {
-            const wishlist = currentUser.wishlist || [];
+            // Load wishlist from localStorage (synced from Supabase)
+            let wishlistData = localStorage.getItem('userWishlist');
+            let wishlist = wishlistData ? JSON.parse(wishlistData) : [];
             const list = document.getElementById('wishlist-list');
+
+            console.log('Loading wishlist - localStorage data:', wishlist);
+            console.log('Loading wishlist - window.wishlist items:', window.wishlist.items);
 
             if (wishlist.length === 0) {
                 list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❤️</div><p>Your wishlist is empty</p></div>';
@@ -553,11 +625,11 @@
 
             list.innerHTML = wishlist.map(item => `
                 <div class="wishlist-item">
-                    <img src="${item.image}" alt="${item.name}" class="wishlist-image">
+                    <img src="${item.image_url || item.image || 'https://via.placeholder.com/200'}" alt="${item.name}" class="wishlist-image">
                     <div class="wishlist-details">
                         <h4>${item.name}</h4>
-                        <p>${item.description}</p>
-                        <p style="color: #4b0082; font-weight: 600;">$${item.price}</p>
+                        <p>${item.description || 'Product'}</p>
+                        <p style="color: #4b0082; font-weight: 600;">$${parseFloat(item.price || 0).toFixed(2)}</p>
                     </div>
                     <button class="remove-btn" onclick="removeFromWishlist(${item.id})">Remove</button>
                 </div>
@@ -565,12 +637,12 @@
         }
 
         function removeFromWishlist(itemId) {
-            const users = JSON.parse(localStorage.getItem('purely_users') || '[]');
-            const userIndex = users.findIndex(u => u.id === currentUser.id);
-            users[userIndex].wishlist = users[userIndex].wishlist.filter(w => w.id !== itemId);
-            localStorage.setItem('purely_users', JSON.stringify(users));
-            currentUser = users[userIndex];
-            loadWishlist();
+            // Remove from localStorage and Supabase
+            if (window.wishlist) {
+                window.wishlist.removeItem(itemId);
+                loadWishlist();
+                console.log('✓ Removed from wishlist:', itemId);
+            }
         }
 
         function loadCoupons() {
@@ -633,6 +705,8 @@
 
         function logout() {
             localStorage.removeItem('purely_current_user');
+            localStorage.removeItem('purely_is_admin');
+            localStorage.removeItem('supabase_session');
             window.location.href = 'index.html';
         }
     </script>

@@ -55,6 +55,12 @@
                 const sb = initSupabase();
                 if (!sb) throw new Error('Supabase not initialized');
 
+                // Setup wishlist Supabase sync
+                const user = JSON.parse(localStorage.getItem('purely_current_user'));
+                if (user && window.wishlist) {
+                    window.wishlist.setSupabase(sb, user.id);
+                }
+
                 const { data, error } = await sb
                     .from('products')
                     .select('*')
@@ -76,6 +82,7 @@
                         <div class="product-card">
                             <div class="product-image">
                                 <img src="${product.image_url || 'https://via.placeholder.com/400'}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/400'">
+                                <button class="wishlist-btn" data-product-id="${product.id}" title="Add to Wishlist">❤️</button>
                             </div>
                             <div class="product-info">
                                 <h3 class="product-name">${product.name}</h3>
@@ -89,6 +96,45 @@
                         </div>
                     `;
                     container.innerHTML += productHTML;
+                });
+
+                // Handle wishlist buttons
+                document.querySelectorAll('.wishlist-btn').forEach(btn => {
+                    const productId = parseInt(btn.dataset.productId);
+                    const product = data.find(p => p.id === productId);
+                    
+                    // Update button state based on wishlist
+                    if (window.wishlist && window.wishlist.isInWishlist(productId)) {
+                        btn.textContent = '❤️';
+                        btn.classList.add('in-wishlist');
+                    }
+                    
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (!window.wishlist) {
+                            alert('Wishlist not initialized. Please refresh the page.');
+                            return;
+                        }
+                        
+                        const productId = parseInt(e.target.dataset.productId);
+                        const product = data.find(p => p.id === productId);
+                        
+                        if (window.wishlist.isInWishlist(productId)) {
+                            window.wishlist.removeItem(productId);
+                            e.target.textContent = '🤍';
+                            e.target.classList.remove('in-wishlist');
+                            alert('Removed from wishlist');
+                        } else {
+                            const added = window.wishlist.addItem({ ...product });
+                            if (added) {
+                                e.target.textContent = '❤️';
+                                e.target.classList.add('in-wishlist');
+                                alert('Added to wishlist');
+                            }
+                        }
+                    });
                 });
 
                 document.querySelectorAll('.add-to-cart').forEach(btn => {

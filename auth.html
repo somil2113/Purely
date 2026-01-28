@@ -15,6 +15,57 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
+        .user-type-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #666;
+            user-select: none;
+        }
+
+        .toggle-label.active {
+            color: #4b0082;
+        }
+
+        .slider-container {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: #ddd;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .slider-container.admin {
+            background: #4b0082;
+        }
+
+        .slider-toggle {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 28px;
+            height: 28px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-container.admin .slider-toggle {
+            left: 30px;
+        }
+
         .auth-tabs {
             display: flex;
             gap: 10px;
@@ -130,6 +181,18 @@
         .form-link a:hover {
             text-decoration: underline;
         }
+
+        .auth-type-indicator {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .auth-type-indicator.admin {
+            color: #4b0082;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -137,13 +200,24 @@
 
     <main>
         <section class="auth-container">
+            <!-- User/Admin Toggle Slider -->
+            <div class="user-type-toggle">
+                <span class="toggle-label active" id="user-label">User</span>
+                <div class="slider-container" id="slider" onclick="toggleUserType()">
+                    <div class="slider-toggle"></div>
+                </div>
+                <span class="toggle-label" id="admin-label">Admin</span>
+            </div>
+
+            <div class="auth-type-indicator active" id="auth-type-indicator">👤 User Login</div>
+
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="switchTab('login', event)">Login</button>
-                <button class="auth-tab" onclick="switchTab('signup', event)">Sign Up</button>
+                <button class="auth-tab" id="signup-tab" onclick="switchTab('signup', event)">Sign Up</button>
             </div>
 
             <div class="auth-forms">
-                <!-- Login Form -->
+                <!-- User Login Form -->
                 <div id="login" class="auth-content active">
                     <h2 style="text-align: center; color: #333; margin-bottom: 25px;">Login</h2>
                     <div class="success-message" id="login-success">Login successful! Redirecting...</div>
@@ -164,12 +238,12 @@
                         <button type="submit" class="submit-btn">Login</button>
                     </form>
 
-                    <div class="form-link">
+                    <div class="form-link" id="signup-link">
                         Don't have an account? <a onclick="switchTab('signup')">Sign Up</a>
                     </div>
                 </div>
 
-                <!-- Sign Up Form -->
+                <!-- User Sign Up Form -->
                 <div id="signup" class="auth-content">
                     <h2 style="text-align: center; color: #333; margin-bottom: 25px;">Create Account</h2>
                     <div class="success-message" id="signup-success">Account created successfully! Please login.</div>
@@ -212,6 +286,32 @@
                         Already have an account? <a onclick="switchTab('login')">Login</a>
                     </div>
                 </div>
+
+                <!-- Admin Login Form -->
+                <div id="admin-login" class="auth-content">
+                    <h2 style="text-align: center; color: #4b0082; margin-bottom: 25px;">🔐 Admin Login</h2>
+                    <div class="success-message" id="admin-login-success">Admin login successful! Redirecting...</div>
+                    
+                    <form onsubmit="handleAdminLogin(event)">
+                        <div class="form-group">
+                            <label for="admin-login-email">Admin Email</label>
+                            <input type="email" id="admin-login-email" required placeholder="admin@purely.com">
+                            <div class="error-message" id="admin-login-email-error"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="admin-login-password">Password</label>
+                            <input type="password" id="admin-login-password" required placeholder="Your password">
+                            <div class="error-message" id="admin-login-password-error"></div>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Admin Login</button>
+                    </form>
+
+                    <div class="form-link">
+                        Not an admin? <a onclick="toggleUserType()">Switch to User Login</a>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
@@ -225,6 +325,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyY25sYmR5YmVqdmNidnZkcGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0OTU3MDYsImV4cCI6MjA4NTA3MTcwNn0.qLj0ClnWgAfxbtZ1P6O2c6TELdevpqerqOnjKGqhaZ8';
 
         let supabaseClient = null;
+        let isAdminMode = false;
 
         function initSupabase() {
             if (!supabaseClient && window.supabase) {
@@ -238,6 +339,43 @@
                 }
             }
             return supabaseClient;
+        }
+
+        function toggleUserType() {
+            isAdminMode = !isAdminMode;
+            const slider = document.getElementById('slider');
+            const userLabel = document.getElementById('user-label');
+            const adminLabel = document.getElementById('admin-label');
+            const indicator = document.getElementById('auth-type-indicator');
+            const signupTab = document.getElementById('signup-tab');
+
+            if (isAdminMode) {
+                slider.classList.add('admin');
+                userLabel.classList.remove('active');
+                adminLabel.classList.add('active');
+                indicator.textContent = '🔐 Admin Login';
+                indicator.classList.add('admin');
+                signupTab.style.display = 'none';
+
+                // Switch to admin login form
+                document.querySelectorAll('.auth-content').forEach(el => el.classList.remove('active'));
+                document.getElementById('admin-login').classList.add('active');
+            } else {
+                slider.classList.remove('admin');
+                userLabel.classList.add('active');
+                adminLabel.classList.remove('active');
+                indicator.textContent = '👤 User Login';
+                indicator.classList.remove('admin');
+                signupTab.style.display = 'block';
+
+                // Switch to user login form
+                document.querySelectorAll('.auth-content').forEach(el => el.classList.remove('active'));
+                document.getElementById('login').classList.add('active');
+            }
+
+            // Clear all errors and forms
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('form').forEach(form => form.reset());
         }
 
         async function registerUser(email, password, name, phone) {
@@ -300,20 +438,78 @@
                     throw error;
                 }
 
-                // Fetch user profile
+                // Try to fetch from users table (regular user)
                 const { data: userProfile } = await sb
                     .from('users')
                     .select('*')
                     .eq('id', data.user.id)
                     .single();
 
+                // Check if user is admin
+                let isAdmin = false;
+                let adminProfile = null;
+                if (userProfile?.role === 'admin') {
+                    isAdmin = true;
+                    adminProfile = userProfile;
+                } else {
+                    // Try to check admins table for fallback
+                    const { data: admin } = await sb
+                        .from('admins')
+                        .select('*')
+                        .eq('id', data.user.id)
+                        .single();
+                    if (admin) {
+                        isAdmin = true;
+                        adminProfile = admin;
+                    }
+                }
+
                 return {
                     success: true,
-                    user: userProfile || { id: data.user.id, email: data.user.email },
-                    session: data.session
+                    user: adminProfile || userProfile || { id: data.user.id, email: data.user.email },
+                    session: data.session,
+                    isAdmin: isAdmin
                 };
             } catch (error) {
                 console.error('Login error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function adminLogin(email, password) {
+            try {
+                const sb = initSupabase();
+                if (!sb) throw new Error('Supabase not initialized');
+
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    console.error('Admin login auth error:', error);
+                    if (error.message && error.message.includes('Invalid login credentials')) {
+                        throw new Error('Invalid admin email or password.');
+                    }
+                    throw error;
+                }
+
+                // Verify admin role
+                const { data: userProfile } = await sb
+                    .from('users')
+                    .select('*')
+                    .eq('id', data.user.id)
+                    .single();
+
+                if (userProfile?.role !== 'admin') {
+                    throw new Error('This account does not have admin privileges.');
+                }
+
+                return {
+                    success: true,
+                    user: userProfile,
+                    session: data.session,
+                    isAdmin: true
+                };
+            } catch (error) {
+                console.error('Admin login error:', error);
                 return { success: false, error: error.message };
             }
         }
@@ -352,9 +548,46 @@
             // Save to localStorage
             localStorage.setItem('purely_current_user', JSON.stringify(result.user));
             localStorage.setItem('supabase_session', JSON.stringify(result.session));
+            if (result.isAdmin) {
+                localStorage.setItem('purely_is_admin', 'true');
+            } else {
+                localStorage.removeItem('purely_is_admin');
+            }
 
             document.getElementById('login-success').style.display = 'block';
-            window.location.href = 'customer-dashboard.html';
+            
+            // Redirect based on user type
+            if (result.isAdmin) {
+                window.location.href = 'admin-dashboard.html';
+            } else {
+                window.location.href = 'customer-dashboard.html';
+            }
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('admin-login-email').value;
+            const password = document.getElementById('admin-login-password').value;
+
+            // Clear previous errors
+            document.getElementById('admin-login-email-error').style.display = 'none';
+            document.getElementById('admin-login-password-error').style.display = 'none';
+
+            const result = await adminLogin(email, password);
+
+            if (!result.success) {
+                document.getElementById('admin-login-email-error').textContent = result.error || 'Admin login failed';
+                document.getElementById('admin-login-email-error').style.display = 'block';
+                return;
+            }
+
+            // Save to localStorage
+            localStorage.setItem('purely_current_user', JSON.stringify(result.user));
+            localStorage.setItem('supabase_session', JSON.stringify(result.session));
+            localStorage.setItem('purely_is_admin', 'true');
+
+            document.getElementById('admin-login-success').style.display = 'block';
+            window.location.href = 'admin-dashboard.html';
         }
 
         async function handleSignup(e) {
@@ -395,8 +628,10 @@
         }
 
         // Make functions globally available
+        window.toggleUserType = toggleUserType;
         window.switchTab = switchTab;
         window.handleLogin = handleLogin;
+        window.handleAdminLogin = handleAdminLogin;
         window.handleSignup = handleSignup;
     </script>
 </body>
