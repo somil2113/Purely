@@ -95,6 +95,30 @@
             font-weight: 600;
         }
 
+        .menu-btn {
+            width: 100%;
+            text-align: left;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .menu-btn.active {
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+        }
+
         .admin-logout {
             margin-top: 30px;
             padding-top: 20px;
@@ -608,9 +632,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="module">
-        import { fetchProducts, addProduct, deleteProduct } from './js/supabase-helpers.js';
-        
+    <script>
         let currentAdmin = null;
         let productsData = [];
 
