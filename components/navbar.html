@@ -8,7 +8,7 @@
             <li><a href="contact.html">Contact</a></li>
         </ul>
         <div class="nav-icons">
-            <span style="cursor: pointer;" onclick="window.openSearchModal()">🔍</span>
+            <span id="search-icon" style="cursor: pointer;" onclick="window.openSearchModal()">🔍</span>
             <span id="cart-icon" style="display: flex; align-items: center; cursor: pointer;" onclick="window.location.href='cart.html'">
                 🛒
                 <span id="cart-count" class="cart-badge">0</span>
@@ -30,6 +30,17 @@
 </div>
 
 <script>
+    // Hide search icon on about and contact pages
+    const currentPage = window.location.pathname;
+    if (currentPage.includes('about.html') || currentPage.includes('contact.html')) {
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchIcon = document.getElementById('search-icon');
+            if (searchIcon) {
+                searchIcon.style.display = 'none';
+            }
+        });
+    }
+
     // Define functions in window scope immediately
     window.handleLoginClick = function() {
         const user = JSON.parse(localStorage.getItem('purely_current_user'));
