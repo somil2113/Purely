@@ -8,7 +8,7 @@
             <li><a href="contact.html">Contact</a></li>
         </ul>
         <div class="nav-icons">
-            <span>🔍</span>
+            <span style="cursor: pointer;" onclick="window.openSearchModal()">🔍</span>
             <span id="cart-icon" style="display: flex; align-items: center; cursor: pointer;" onclick="window.location.href='cart.html'">
                 🛒
                 <span id="cart-count" class="cart-badge">0</span>
@@ -18,6 +18,16 @@
         </div>
     </div>
 </nav>
+
+<!-- Search Modal -->
+<div id="search-modal" class="search-modal" style="display: none;">
+    <div class="search-modal-content">
+        <span class="search-close" onclick="window.closeSearchModal()">&times;</span>
+        <h2>Search Products</h2>
+        <input type="text" id="search-input" class="search-input" placeholder="Search for products..." onkeyup="window.performSearch(this.value)">
+        <div id="search-results" class="search-results"></div>
+    </div>
+</div>
 
 <script>
     // Define functions in window scope immediately
@@ -82,6 +92,73 @@
     
     // Listen for storage changes (login from other tabs)
     window.addEventListener('storage', window.updateNavbarAuth);
+    
+    // Search functionality
+    let allProducts = [];
+    
+    window.openSearchModal = async function() {
+        const modal = document.getElementById('search-modal');
+        modal.style.display = 'flex';
+        document.getElementById('search-input').focus();
+        
+        // Fetch products if not already loaded
+        if (allProducts.length === 0) {
+            try {
+                const SUPABASE_URL = 'https://srcnlbdybejvcbvvdpbk.supabase.co';
+                const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyY25sYmR5YmVqdmNidnZkcGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0OTU3MDYsImV4cCI6MjA4NTA3MTcwNn0.qLj0ClnWgAfxbtZ1P6O2c6TELdevpqerqOnjKGqhaZ8';
+                
+                const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                const { data } = await sb.from('products').select('*');
+                allProducts = data || [];
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            }
+        }
+    };
+    
+    window.closeSearchModal = function() {
+        document.getElementById('search-modal').style.display = 'none';
+        document.getElementById('search-input').value = '';
+        document.getElementById('search-results').innerHTML = '';
+    };
+    
+    window.performSearch = function(query) {
+        const resultsContainer = document.getElementById('search-results');
+        
+        if (!query.trim()) {
+            resultsContainer.innerHTML = '';
+            return;
+        }
+        
+        const filtered = allProducts.filter(product => 
+            product.name.toLowerCase().includes(query.toLowerCase()) ||
+            product.description.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        if (filtered.length === 0) {
+            resultsContainer.innerHTML = '<p style="text-align: center; color: #999;">No products found</p>';
+            return;
+        }
+        
+        resultsContainer.innerHTML = filtered.map(product => `
+            <div class="search-result-item">
+                <img src="${product.image_url || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22100%22 height=%22100%22/%3E%3C/svg%3E'}" alt="${product.name}">
+                <div class="search-result-info">
+                    <h4>${product.name}</h4>
+                    <p>${product.description.substring(0, 60)}...</p>
+                    <p class="search-result-price">$${product.price.toFixed(2)}</p>
+                </div>
+                <button class="search-result-btn" onclick="window.location.href='products.html?search=${encodeURIComponent(product.name)}'">View</button>
+            </div>
+        `).join('');
+    };
+    
+    // Close modal when clicking outside
+    document.getElementById('search-modal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            window.closeSearchModal();
+        }
+    });
     
     // Also add observer for when localStorage changes in same window
     const originalSetItem = localStorage.setItem;
