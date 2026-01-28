@@ -1,11 +1,18 @@
-import { getSupabase } from './supabase-config.js';
+// Supabase helpers - non-module version for global access
+
+const SUPABASE_URL = 'https://srcnlbdybejvcbvvdpbk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyY25sYmR5YmVqdmNidnZkcGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0OTU3MDYsImV4cCI6MjA4NTA3MTcwNn0.qLj0ClnWgAfxbtZ1P6O2c6TELdevpqerqOnjKGqhaZ8';
 
 let supabase = null;
 
 function initSupabase() {
   if (!supabase) {
     try {
-      supabase = getSupabase();
+      if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } else {
+        throw new Error('Supabase library not loaded');
+      }
     } catch (error) {
       console.error('Failed to initialize Supabase:', error);
       throw error;
@@ -15,7 +22,7 @@ function initSupabase() {
 }
 
 // ==================== PRODUCTS FUNCTIONS ====================
-export async function fetchProducts() {
+async function fetchProducts() {
   try {
     const sb = initSupabase();
     const { data, error } = await sb
@@ -38,7 +45,7 @@ export async function fetchProducts() {
   }
 }
 
-export async function addProduct(productData) {
+async function addProduct(productData) {
   try {
     const sb = initSupabase();
     const { data, error } = await sb
@@ -59,7 +66,7 @@ export async function addProduct(productData) {
   }
 }
 
-export async function deleteProduct(productId) {
+async function deleteProduct(productId) {
   try {
     const sb = initSupabase();
     const { error } = await sb
@@ -75,7 +82,7 @@ export async function deleteProduct(productId) {
   }
 }
 
-export async function updateProduct(productId, productData) {
+async function updateProduct(productId, productData) {
   try {
     const sb = initSupabase();
     const { data, error } = await sb
@@ -102,7 +109,7 @@ export async function updateProduct(productId, productData) {
  * @param {string} phone - User phone number
  * @returns {object} - { success: boolean, user: object, error: string }
  */
-export async function registerUser(email, password, name, phone) {
+async function registerUser(email, password, name, phone) {
   try {
     const sb = initSupabase();
     // 1. Create user in Supabase Auth
@@ -149,7 +156,7 @@ export async function registerUser(email, password, name, phone) {
  * @param {string} password - User password
  * @returns {object} - { success: boolean, user: object, session: object, error: string }
  */
-export async function loginUser(email, password) {
+async function loginUser(email, password) {
   try {
     const sb = initSupabase();
     const { data, error } = await sb.auth.signInWithPassword({
@@ -183,7 +190,7 @@ export async function loginUser(email, password) {
  * Logout current user
  * @returns {object} - { success: boolean, error: string }
  */
-export async function logoutUser() {
+async function logoutUser() {
   try {
     const sb = initSupabase();
     const { error } = await sb.auth.signOut();
@@ -199,7 +206,7 @@ export async function logoutUser() {
  * Get current authenticated user session
  * @returns {object} - { user: object, session: object } or null
  */
-export async function getCurrentSession() {
+async function getCurrentSession() {
   try {
     const sb = initSupabase();
     const { data: { session } } = await sb.auth.getSession();
@@ -227,7 +234,7 @@ export async function getCurrentSession() {
  * Watch for auth state changes
  * @param {function} callback - Function to call when auth state changes
  */
-export function onAuthStateChange(callback) {
+function onAuthStateChange(callback) {
   try {
     const sb = initSupabase();
     return sb.auth.onAuthStateChange((event, session) => {
