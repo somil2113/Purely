@@ -30,17 +30,6 @@
 </div>
 
 <script>
-    // Hide search icon on about and contact pages
-    const currentPage = window.location.pathname;
-    if (currentPage.includes('about.html') || currentPage.includes('contact.html')) {
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchIcon = document.getElementById('search-icon');
-            if (searchIcon) {
-                searchIcon.style.display = 'none';
-            }
-        });
-    }
-
     // Define functions in window scope immediately
     window.handleLoginClick = function() {
         const user = JSON.parse(localStorage.getItem('purely_current_user'));
@@ -170,6 +159,21 @@
             window.closeSearchModal();
         }
     });
+    
+    // Hide search icon on about and contact pages
+    window.hideSearchIconIfNeeded = function() {
+        const currentPage = window.location.pathname;
+        if (currentPage.includes('about.html') || currentPage.includes('contact.html')) {
+            const searchIcon = document.getElementById('search-icon');
+            if (searchIcon) {
+                searchIcon.style.display = 'none';
+            }
+        }
+    };
+    
+    // Call immediately and also after a short delay to ensure DOM is ready
+    window.hideSearchIconIfNeeded();
+    setTimeout(window.hideSearchIconIfNeeded, 100);
     
     // Also add observer for when localStorage changes in same window
     const originalSetItem = localStorage.setItem;

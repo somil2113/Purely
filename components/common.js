@@ -266,11 +266,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Load navbar first
     await loadComponent("navbar-placeholder", "components/navbar.html");
     
-    // After navbar loads, update auth display
+    // After navbar loads, update auth display and hide search if needed
     setTimeout(() => {
         console.log('Calling updateNavbarAuth after navbar load');
         if (window.updateNavbarAuth) {
             window.updateNavbarAuth();
+        }
+        if (window.hideSearchIconIfNeeded) {
+            window.hideSearchIconIfNeeded();
         }
     }, 100);
     
