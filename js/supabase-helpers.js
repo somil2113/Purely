@@ -3,13 +3,13 @@
 const SUPABASE_URL = 'https://srcnlbdybejvcbvvdpbk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyY25sYmR5YmVqdmNidnZkcGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0OTU3MDYsImV4cCI6MjA4NTA3MTcwNn0.qLj0ClnWgAfxbtZ1P6O2c6TELdevpqerqOnjKGqhaZ8';
 
-let supabase = null;
+let supabaseClient = null;
 
 function initSupabase() {
-  if (!supabase) {
+  if (!supabaseClient) {
     try {
       if (window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       } else {
         throw new Error('Supabase library not loaded');
       }
@@ -18,7 +18,7 @@ function initSupabase() {
       throw error;
     }
   }
-  return supabase;
+  return supabaseClient;
 }
 
 // ==================== PRODUCTS FUNCTIONS ====================
