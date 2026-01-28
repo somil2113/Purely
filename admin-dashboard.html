@@ -433,12 +433,12 @@
         <div class="admin-sidebar">
             <div class="admin-logo">📊 Purely Admin</div>
             <ul class="admin-menu">
-                <li><button class="menu-btn active" onclick="switchAdminSection('overview')">📈 Dashboard</button></li>
-                <li><button class="menu-btn" onclick="switchAdminSection('orders')">📦 Manage Orders</button></li>
-                <li><button class="menu-btn" onclick="switchAdminSection('products')">🛍️ Manage Products</button></li>
-                <li><button class="menu-btn" onclick="switchAdminSection('customers')">👥 Manage Customers</button></li>
-                <li><button class="menu-btn" onclick="switchAdminSection('analytics')">📊 Analytics</button></li>
-                <li><button class="menu-btn" onclick="switchAdminSection('settings')">⚙️ Settings</button></li>
+                <li><button class="menu-btn active" onclick="switchAdminSection('overview', this)">📈 Dashboard</button></li>
+                <li><button class="menu-btn" onclick="switchAdminSection('orders', this)">📦 Manage Orders</button></li>
+                <li><button class="menu-btn" onclick="switchAdminSection('products', this)">🛍️ Manage Products</button></li>
+                <li><button class="menu-btn" onclick="switchAdminSection('customers', this)">👥 Manage Customers</button></li>
+                <li><button class="menu-btn" onclick="switchAdminSection('analytics', this)">📊 Analytics</button></li>
+                <li><button class="menu-btn" onclick="switchAdminSection('settings', this)">⚙️ Settings</button></li>
             </ul>
             <div class="admin-logout">
                 <button class="logout-btn" onclick="adminLogout()">Logout</button>
@@ -624,11 +624,18 @@
             loadDashboardData();
         });
 
-        function switchAdminSection(section) {
+        function switchAdminSection(section, element) {
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.menu-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(section).classList.add('active');
-            event.target.classList.add('active');
+            
+            const sectionEl = document.getElementById(section);
+            if (sectionEl) {
+                sectionEl.classList.add('active');
+            }
+            
+            if (element) {
+                element.classList.add('active');
+            }
 
             if (section === 'overview') loadDashboardData();
             else if (section === 'orders') loadOrders();
